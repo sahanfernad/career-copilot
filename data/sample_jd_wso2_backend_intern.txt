@@ -1,0 +1,31 @@
+Software Engineering Intern — Backend / Integration Platforms
+WSO2 (Colombo, Sri Lanka)
+
+About the role:
+We're looking for a Software Engineering Intern to join one of our backend
+or platform engineering teams. You'll work on real production code that
+ships to enterprise customers, alongside senior engineers, contributing to
+our open-source integration and identity products.
+
+What you'll do:
+- Build and maintain REST APIs in Java
+- Work with our microservices architecture and contribute to core platform modules
+- Write unit and integration tests; participate in code review
+- Collaborate using Git/GitHub in a real open-source-style workflow
+- Debug and fix issues in existing services
+
+What we look for:
+- Strong fundamentals in Java and object-oriented design
+- Working knowledge of REST API design and HTTP fundamentals
+- Familiarity with SQL and relational databases
+- Comfortable with Git and collaborative development workflows (PRs, code review)
+- Understanding of authentication/authorization concepts (OAuth2, OpenID Connect)
+  is a strong plus
+- Prior open-source contributions (merged PRs) are a significant plus
+- Exposure to containerization (Docker) and CI/CD pipelines is a plus
+- A public GitHub profile showing real projects, not just coursework
+
+Nice to have:
+- Experience with API gateways or integration middleware
+- Familiarity with Kubernetes
+- Hackathon participation or demonstrable side projects

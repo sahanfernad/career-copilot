@@ -1,0 +1,44 @@
+[0:00 — HOOK]
+Preparing for software engineering internships and placements can feel like navigating a maze in the dark. Students rarely get clear answers on where their skills fall short or whether they are actually prepared for technical interviews.
+
+[0:20 — WHAT IT IS]
+(pause)
+To solve this, I built Career Copilot. It is an adaptive, secure, local concierge agent that audits a student's resume against target job descriptions, designs a custom project-based learning plan, and coaches them through realistic, turn-based mock interviews.
+
+[0:40 — SHOW THE BANNER]
+(show assets/cover_page_banner.png)
+As you can see from our cover banner, Career Copilot acts as a secure, local, and adaptive strategist designed specifically to close the gap between college curricula and industry expectations.
+
+[1:00 — ARCHITECTURE]
+(show assets/architecture_diagram.png)
+Let's look at the system architecture. (pause)
+Everything is built on the Google Agent Development Kit 2.0 Workflow API. (pause)
+When the student sends a message, it is first evaluated by our security checkpoint node, which scrubs PII like emails and phone numbers, checks for prompt injection keywords, and records structured audit logs. (pause)
+Once cleared, the orchestrator node coordinates the conversation flow, routing requests based on user commands. (pause)
+For skill gap analysis, the orchestrator calls our resume job match agent, which uses local MCP tools to read the candidate's resume and compares it against target requirements. (pause)
+Next, the learning roadmap agent pulls these identified gaps, cross-references completed skills from the local progress store, and structures a prioritized roadmap containing resource recommendations and hands-on projects. (pause)
+Finally, when the student wants to practice, the orchestrator triggers the run interview cycle node. This node coordinates with our interview coach agent to generate technical questions and utilizes a human-in-the-loop pause to wait for the student's response.
+
+[2:00 — LIVE DEMO]
+(switch to playground at localhost:18081)
+Let's see this in action. (pause)
+First, I will run the gap analysis command: `/analyze data/resume.txt data/sample_jd_wso2_backend_intern.txt`.
+(pause)
+The system executes the workflow. The security checkpoint node validates the input, and the resume agent compares our sample resume of Alex Dev against the WSO2 job description. As you can see, the agent has generated a structured gap report. It identifies Python and Git as strong, but flags FastAPI, Docker, and SQL as missing. (pause)
+Now, I will type `/roadmap` in the input field and press send.
+(pause)
+The learning roadmap agent reads the gap report and progress logs. It immediately structures a sequenced roadmap. The plan suggests building a REST API using FastAPI as a high-priority project, since closing the FastAPI gap is foundational. (pause)
+Next, let's start a mock interview on this topic. I will type `/interview FastAPI`.
+(pause)
+The orchestrator routes us to the interview cycle, and the interview coach agent generates a challenging technical question. (pause)
+It asks me to explain the differences between path parameters and query parameters in FastAPI. (pause)
+The workflow pauses here, waiting for my response. I'll type in a sample answer.
+(pause)
+Once submitted, the workflow resumes. The coach agent scores my answer, provides constructive critique, and updates the local storage file.
+
+[3:00 — SECURITY & MCP]
+(pause)
+Under the hood, all file parsing and progress storage are handled through our local Model Context Protocol server. The server exposes stdio tools for read and write operations, meaning no raw student data ever leaves the local machine except for direct LLM analysis calls. Security is maintained by keeping all progress states strictly local and protected by the gateway checkpoint.
+
+[3:30 — IMPACT / CLOSE]
+Career Copilot shifts placement preparation from generic advice to structured, project-driven learning. It helps students build portfolios that count, test their readiness in a secure environment, and enter interviews with confidence. Thank you.

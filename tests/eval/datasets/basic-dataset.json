@@ -1,0 +1,51 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "analyze_default",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "/analyze"}]
+      }
+    },
+    {
+      "eval_case_id": "roadmap_generation",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [{"text": "/analyze"}]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [{"text": "### Skill Gap Report\n\n**Overall Fit Summary:** Candidate has strong Python fundamentals but lacks backend framework (FastAPI) and deployment (Docker, SQL) skills required for the internship."}]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [{"text": "/roadmap"}]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "eval_case_id": "interview_start",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "/interview SQL"}]
+      }
+    }
+  ]
+}

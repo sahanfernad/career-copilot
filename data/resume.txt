@@ -1,0 +1,25 @@
+Alex Dev
+alex.dev@email.com | +1234567890 | https://github.com/alexdev
+
+EDUCATION
+Indian Institute of Technology (IIT)
+Bachelor of Technology in Computer Science & Engineering (Expected 2027)
+
+SKILLS
+- Programming Languages: Python, JavaScript, HTML, CSS
+- Tools & Technologies: Git, VS Code, Windows, Linux
+- Core Concepts: Object-Oriented Programming, Data Structures, Algorithms
+
+PROJECTS
+Personal Portfolio Website
+- Designed and developed a responsive personal website using HTML, CSS, and vanilla JavaScript.
+- Hosted on GitHub Pages, attracting over 500 unique visitors.
+
+Basic Calculator App
+- Built a command-line calculator app in Python supporting basic arithmetic operations.
+- Implemented error handling for division by zero and invalid inputs.
+
+EXPERIENCE
+Open Source Contributor (Self-Directed)
+- Contributed minor bug fixes to local community projects on GitHub.
+- Collaborated with other students on academic group projects using Git version control.

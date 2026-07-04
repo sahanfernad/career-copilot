@@ -71,7 +71,7 @@ graph TD
     SecError --> Final
 
     subgraph MCP Server
-        Tools[read_resume_text<br>read_job_description_text<br>get_progress<br>update_progress]
+        Tools[read_resume_text<br>read_job_description_text<br>get_progress<br>update_progress<br>get_learning_resource_link]
     end
     
     ResumeAgent -.->|Calls MCP| Tools

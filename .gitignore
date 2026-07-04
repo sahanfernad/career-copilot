@@ -222,3 +222,5 @@ scratch/
 *.prin
 Adobe Premiere Pro Auto-Save/
 
+# Premiere cache
+Adobe Premiere Pro Captured and Generated/

@@ -81,6 +81,13 @@ graph TD
 
 ---
 
+## Rubric Highlights
+
+- **Deployability**: Full Terraform IaC under `deployment/terraform/` — provisions Cloud Run service (`service.tf`), storage (`storage.tf`), IAM (`iam.tf`), telemetry (`telemetry.tf`), and enabled APIs (`apis.tf`), with environment-specific variables in `vars/env.tfvars`.
+- **Agent Skills**: `app/skills/resource_recommendation/SKILL.md` defines the `resource_recommendation` skill, invoked via the deterministic `get_learning_resource_link` MCP tool during `/roadmap` generation — no LLM calls or network requests, zero hallucination risk.
+
+---
+
 ## How to Run
 
 - **Playground (Interactive UI Mode)**:

@@ -100,6 +100,7 @@ The local MCP server (`app/mcp_server.py`) runs as a background process and expo
 2. `read_job_description_text`: Parses job descriptions from a file or passes through raw pasted text.
 3. `get_progress`: Reads the local progress store (`storage/progress.json`) to check what skills the student has already mastered.
 4. `update_progress`: Saves scores, feedback, and completed skills back to the local progress store.
+5. `get_learning_resource_link`: Generates a deterministic, URL-encoded YouTube search link for a given skill name (no LLM calls, no network requests) — used by the Agent Skills feature described in Section 3.7.
 
 ---
 

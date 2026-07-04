@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import re
@@ -54,6 +55,7 @@ class RoadmapItem(BaseModel):
     priority: str  # "High", "Medium", "Low"
     resource_or_method: str
     suggested_project: str
+    resource_link: Optional[str] = None
 
 class LearningRoadmap(BaseModel):
     items: List[RoadmapItem] = Field(default_factory=list)
@@ -90,6 +92,8 @@ roadmap_agent = LlmAgent(
 Your task is to take the GapReport (missing & weak skills) and output a personalized, sequenced learning roadmap.
 For each gap, suggest 1 concrete hands-on project to build and a recommended learning resource.
 Read the progress store (using get_progress tool) to adjust your recommendations based on what's already completed.
+For each roadmap item, call the `get_learning_resource_link` tool with the skill name as input, and populate the returned URL string in the `resource_link` field of that RoadmapItem.
+IMPORTANT: Pass only the bare, clean skill/topic name as input to `get_learning_resource_link` (e.g., use "Docker containerization" or "Java", NOT "Docker containerization tutorial" or "Java course"). Do not append suffix words like "tutorial", "course", "guide", or similar, since the tool appends its own suffix.
 Output MUST be a JSON object conforming to the LearningRoadmap schema.
 """,
     output_schema=LearningRoadmap,
@@ -106,6 +110,22 @@ Output MUST be a JSON object conforming to the InterviewFeedback schema.
     output_schema=InterviewFeedback,
     tools=[mcp_toolset],
 )
+
+# --- Shared interview question fallback ---
+
+def _interview_question_fallback(topic: str) -> str:
+    """Hardcoded questions — used only when the LLM call fails or times out."""
+    is_generic = topic.strip().lower() in ("general swe", "")
+    topic_clause = f" in {topic}" if not is_generic else ""
+    if "sql" in topic.lower() or "database" in topic.lower():
+        return f"What is the difference between a primary key and a foreign key in {topic}, and how do they establish relationships?"
+    elif "docker" in topic.lower() or "container" in topic.lower():
+        return "Explain the difference between a Docker Image and a Docker Container."
+    elif is_generic:
+        return "What is the difference between path parameters and query parameters in a REST API, and when should you use each?"
+    else:
+        return f"What is the difference between path parameters and query parameters{topic_clause}, and when should you use each?"
+
 
 # --- Mock Agent Nodes (for offline/free testing) ---
 
@@ -124,28 +144,58 @@ def mock_resume_agent_node(node_input: str) -> GapReport:
     )
 
 def mock_roadmap_agent_node(node_input: str) -> LearningRoadmap:
+    import json as _json
+    from app.mcp_server import get_learning_resource_link
+    # Parse completed_skills from the input so we can skip already-tested skills
+    completed = []
+    try:
+        if "COMPLETED SKILLS" in node_input:
+            cs_section = node_input.split("COMPLETED SKILLS:")[1].strip()
+            completed = [s.lower() for s in _json.loads(cs_section)]
+    except Exception:
+        pass
+
+    all_items = [
+        RoadmapItem(
+            skill="FastAPI",
+            priority="High",
+            resource_or_method="FastAPI Tutorial (official docs)",
+            suggested_project="Build a REST API for a Bookstore with FastAPI",
+            resource_link=get_learning_resource_link("FastAPI")
+        ),
+        RoadmapItem(
+            skill="SQL & Databases",
+            priority="High",
+            resource_or_method="SQLAlchemy & SQLite documentation",
+            suggested_project="Integrate Bookstore REST API with SQLite database using SQLAlchemy",
+            resource_link=get_learning_resource_link("SQL & Databases")
+        ),
+        RoadmapItem(
+            skill="Docker",
+            priority="Medium",
+            resource_or_method="Docker Getting Started Guide",
+            suggested_project="Containerize the Bookstore REST API using Docker",
+            resource_link=get_learning_resource_link("Docker")
+        )
+    ]
+
+    # Downgrade priority for skills already tested (score >= 70 → completed)
+    items = []
+    for item in all_items:
+        if item.skill.lower() in completed or any(c in item.skill.lower() for c in completed):
+            items.append(RoadmapItem(
+                skill=item.skill,
+                priority="Low (already practiced)",
+                resource_or_method=item.resource_or_method,
+                suggested_project=item.suggested_project,
+                resource_link=item.resource_link
+            ))
+        else:
+            items.append(item)
+
     return LearningRoadmap(
-        items=[
-            RoadmapItem(
-                skill="FastAPI",
-                priority="High",
-                resource_or_method="FastAPI Tutorial (official docs)",
-                suggested_project="Build a REST API for a Bookstore with FastAPI"
-            ),
-            RoadmapItem(
-                skill="SQL & Databases",
-                priority="High",
-                resource_or_method="SQLAlchemy & SQLite documentation",
-                suggested_project="Integrate Bookstore REST API with SQLite database using SQLAlchemy"
-            ),
-            RoadmapItem(
-                skill="Docker",
-                priority="Medium",
-                resource_or_method="Docker Getting Started Guide",
-                suggested_project="Containerize the Bookstore REST API using Docker"
-            )
-        ],
-        summary="A 3-step learning plan focusing on backend fundamentals (FastAPI), databases (SQL), and deployment (Docker)."
+        items=items,
+        summary="A learning plan focusing on backend fundamentals (FastAPI), databases (SQL), and deployment (Docker). Skills already tested in mock interviews are deprioritized."
     )
 
 async def mock_interview_agent_node(node_input: str) -> InterviewFeedback:
@@ -199,37 +249,94 @@ async def mock_interview_agent_node(node_input: str) -> InterviewFeedback:
             score=score
         )
     else:
-        # Generating a question
+        # Question generation (fallback path — normally pre-empted by run_interview_agent)
         topic_match = re.search(r"topic:\s*(.*)", node_input, re.IGNORECASE)
-        topic = topic_match.group(1).strip() if topic_match else "General SWE"
-        
-        question = f"What is the difference between path parameters and query parameters in {topic}, and when should you use each?"
-        if "sql" in topic.lower() or "database" in topic.lower():
-            question = f"What is the difference between a primary key and a foreign key in {topic}, and how do they establish relationships?"
-        elif "docker" in topic.lower() or "container" in topic.lower():
-            question = f"Explain the difference between a Docker Image and a Docker Container in {topic}."
-            
+        topic = (topic_match.group(1).strip() if topic_match else "General SWE").rstrip(". ,")
         return InterviewFeedback(
-            question=question,
-            user_answer="",
-            feedback="",
-            score=0
+            question=_interview_question_fallback(topic),
+            user_answer="", feedback="", score=0,
         )
 
+
+@node(rerun_on_resume=True)
 async def run_resume_agent(ctx: Context, node_input: str) -> GapReport:
     if os.environ.get("MOCK_LLM") == "True":
         return mock_resume_agent_node(node_input)
-    return await ctx.run_node(resume_agent, node_input=node_input)
+    res = await ctx.run_node(resume_agent, node_input=node_input)
+    if isinstance(res, dict):
+        return GapReport(**res)
+    return res
 
+@node(rerun_on_resume=True)
 async def run_roadmap_agent(ctx: Context, node_input: str) -> LearningRoadmap:
     if os.environ.get("MOCK_LLM") == "True":
         return mock_roadmap_agent_node(node_input)
-    return await ctx.run_node(roadmap_agent, node_input=node_input)
+    res = await ctx.run_node(roadmap_agent, node_input=node_input)
+    if isinstance(res, dict):
+        return LearningRoadmap(**res)
+    return res
 
 async def run_interview_agent(ctx: Context, node_input: str) -> InterviewFeedback:
+    is_eval = "Evaluate" in node_input or "User Answer:" in node_input
+
+    if not is_eval:
+        if os.environ.get("MOCK_LLM") == "True":
+            _m = re.search(r"topic:\s*(.*)", node_input, re.IGNORECASE)
+            _topic = (_m.group(1).strip() if _m else "General SWE").rstrip(". ,")
+            return InterviewFeedback(
+                question=_interview_question_fallback(_topic),
+                user_answer="", feedback="", score=0,
+            )
+
+        # Question generation — MOCK_LLM=True short-circuits to the fallback question.
+        # Otherwise, routes through the existing interview_agent LlmAgent with its own
+        # hardcoded fallback on API failure or timeout.
+        try:
+            _key = os.environ.get("GOOGLE_API_KEY", "")
+            _masked = (_key[:6] + "***" + _key[-4:]) if len(_key) > 10 else ("***" if _key else "<MISSING>")
+            logger.warning(
+                f"[interview] calling interview_agent | "
+                f"GOOGLE_API_KEY={_masked} | "
+                f"GOOGLE_GENAI_USE_VERTEXAI={os.environ.get('GOOGLE_GENAI_USE_VERTEXAI', '<unset>')}"
+            )
+            res = await asyncio.wait_for(
+                ctx.run_node(interview_agent, node_input=node_input),
+                timeout=10.0,
+            )
+            if isinstance(res, dict):
+                return InterviewFeedback(**res)
+            return res
+        except (asyncio.TimeoutError, Exception) as _exc:
+            logger.warning(
+                f"[interview] question gen via interview_agent failed "
+                f"({type(_exc).__name__}); using hardcoded fallback"
+            )
+            _m = re.search(r"topic:\s*(.*)", node_input, re.IGNORECASE)
+            _topic = (_m.group(1).strip() if _m else "General SWE").rstrip(". ,")
+            return InterviewFeedback(
+                question=_interview_question_fallback(_topic),
+                user_answer="", feedback="", score=0,
+            )
+
+    # Evaluation path — respect MOCK_LLM flag for mocked scoring
     if os.environ.get("MOCK_LLM") == "True":
         return await mock_interview_agent_node(node_input)
-    return await ctx.run_node(interview_agent, node_input=node_input)
+    res = await ctx.run_node(interview_agent, node_input=node_input)
+    if isinstance(res, dict):
+        return InterviewFeedback(**res)
+    return res
+
+
+# --- PII Scrubbing Helper ---
+
+_EMAIL_PATTERN = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
+_PHONE_PATTERN = r'\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}'
+
+def scrub_pii(text: str) -> str:
+    """Remove emails and phone numbers from text, replacing with redaction tokens."""
+    text = re.sub(_EMAIL_PATTERN, "[REDACTED_EMAIL]", text)
+    text = re.sub(_PHONE_PATTERN, "[REDACTED_PHONE]", text)
+    return text
 
 
 # --- Workflow Nodes ---
@@ -253,12 +360,8 @@ def security_checkpoint(ctx: Context, node_input: Any) -> Event:
     else:
         user_text = str(node_input)
 
-    # 1. PII Scrubbing (Regex for emails and phone numbers)
-    email_pattern = r'[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+'
-    phone_pattern = r'\+?\d{1,4}?[-.\s]?\(?\d{1,3}?\)?[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}'
-    
-    scrubbed_text = re.sub(email_pattern, "[REDACTED_EMAIL]", user_text)
-    scrubbed_text = re.sub(phone_pattern, "[REDACTED_PHONE]", scrubbed_text)
+    # 1. PII Scrubbing (delegated to shared helper)
+    scrubbed_text = scrub_pii(user_text)
 
     # 2. Prompt Injection Detection
     injection_keywords = [
@@ -331,7 +434,30 @@ def orchestrator(ctx: Context, node_input: str) -> Event:
         parts = user_msg.split()
         topic = "General SWE"
         if len(parts) > 1:
-            topic = " ".join(parts[1:])
+            raw_topic = " ".join(parts[1:])
+            # Detect literal square brackets typed by the user (e.g. /interview [SQL])
+            if "[" in raw_topic or "]" in raw_topic:
+                cleaned = raw_topic.replace("[", "").replace("]", "").strip()
+                hint = (
+                    f"💡 Did you mean `/interview {cleaned}` (no brackets)?\n\n"
+                    f"Square brackets `[ ]` are just placeholders in the help text — "
+                    f"type the topic directly, e.g. `/interview {cleaned}`."
+                )
+                content = types.Content(role="model", parts=[types.Part.from_text(text=hint)])
+                return Event(content=content, route="exit")
+            topic = raw_topic
+        # Handle nospace variant: /interview[SQL] → topic = "SQL"
+        elif user_msg_lower.startswith(("/interview[", "/mock[")):
+            bracket_start = user_msg.index("[")
+            raw_topic = user_msg[bracket_start:].replace("[", "").replace("]", "").strip()
+            cleaned = raw_topic or "the topic"
+            hint = (
+                f"💡 Did you mean `/interview {cleaned}` (no brackets)?\n\n"
+                f"Square brackets `[ ]` are just placeholders — "
+                f"type the topic directly, e.g. `/interview {cleaned}`."
+            )
+            content = types.Content(role="model", parts=[types.Part.from_text(text=hint)])
+            return Event(content=content, route="exit")
         ctx.state["active_interview_topic"] = topic
         return Event(output=topic, route="run_interview")
 
@@ -347,7 +473,7 @@ def orchestrator(ctx: Context, node_input: str) -> Event:
             "1. `/analyze [resume_path] [jd_path]` — Parse resume and JD to identify skill gaps.\n"
             "   *(Default paths: data/resume.pdf data/sample_jd_wso2_backend_intern.txt)*\n"
             "2. `/roadmap` — Generate a personalized learning roadmap with concrete projects.\n"
-            "3. `/interview [topic]` — Start a mock interview on a skill/topic (e.g. `/interview Java`).\n"
+            "3. `/interview <topic>` — Start a mock interview on a skill/topic (e.g. `/interview Java`).\n"
             "4. `/exit` — Exit the prep session.\n\n"
             "Please enter a valid command to begin."
         )
@@ -362,6 +488,9 @@ def prepare_resume_input(ctx: Context) -> str:
     try:
         resume_text = read_resume(resume_path)
         jd_text = read_job_description(jd_path)
+        # Scrub PII from file contents before sending to the LLM agent
+        resume_text = scrub_pii(resume_text)
+        jd_text = scrub_pii(jd_text)
         return f"RESUME:\n{resume_text}\n\nJOB DESCRIPTION:\n{jd_text}"
     except Exception as e:
         return f"ERROR: Failed to read files. Details: {e}"
@@ -415,8 +544,9 @@ def save_roadmap_result(ctx: Context, node_input: LearningRoadmap) -> Event:
         
     items_md = []
     for idx, item in enumerate(node_input.items, 1):
+        link_str = f" ([Video Resource]({item.resource_link}))" if item.resource_link else ""
         items_md.append(
-            f"{idx}. **{item.skill}** (Priority: {item.priority})\n"
+            f"{idx}. **{item.skill}** (Priority: {item.priority}){link_str}\n"
             f"   - *Resource*: {item.resource_or_method}\n"
             f"   - *Suggested Project*: {item.suggested_project}"
         )
@@ -425,20 +555,30 @@ def save_roadmap_result(ctx: Context, node_input: LearningRoadmap) -> Event:
         f"### Personalized Learning Roadmap\n\n"
         f"{node_input.summary}\n\n"
         f"**Action Plan:**\n" + "\n".join(items_md) + "\n\n"
-        f"Type `/interview [topic]` to start a mock interview on a skill."
+        f"Type `/interview <topic>` to start a mock interview on a skill (e.g. `/interview Python`)."
     )
     content = types.Content(role="model", parts=[types.Part.from_text(text=response)])
     return Event(content=content)
 
 @node(rerun_on_resume=True)
 async def run_interview_cycle(ctx: Context, node_input: str):
-    topic = ctx.state.get("active_interview_topic", "General SWE")
+    # Read topic from snapshot first (set at question-generation time), falling
+    # back to active_interview_topic, then default.  This ensures the evaluation
+    # phase always logs the REAL skill even if active_interview_topic was reset.
+    topic = (
+        ctx.state.get("interview_topic_snapshot")
+        or ctx.state.get("active_interview_topic")
+        or "General SWE"
+    )
     
     if ctx.state.get("interview_question") is None:
         prompt = f"Please generate a single challenging technical interview question for the topic: {topic}."
         feedback = await run_interview_agent(ctx, prompt)
         
         ctx.state["interview_question"] = feedback.question
+        # Snapshot the topic so evaluation phase always has the real topic,
+        # even if active_interview_topic is reset before this node resumes.
+        ctx.state["interview_topic_snapshot"] = topic
         
         # Use a unique interrupt_id each time so the dialog always pops up fresh
         interview_count = ctx.state.get("interview_count", 0) + 1
@@ -456,24 +596,30 @@ async def run_interview_cycle(ctx: Context, node_input: str):
         yield RequestInput(interrupt_id=interrupt_id)
         return
 
-    user_answer = ""
+    user_answer = None
     if ctx.resume_inputs:
-        # Look up whichever unique interrupt_id was stored for this round
+        # Explicit is-not-None checks: an empty string is a valid answer and
+        # must NOT be overwritten by the next fallback in the chain.
         interrupt_id = ctx.state.get("interview_interrupt_id", "user_answer")
-        if interrupt_id in ctx.resume_inputs:
-            user_answer = ctx.resume_inputs[interrupt_id]
-        elif "user_answer" in ctx.resume_inputs:
-            user_answer = ctx.resume_inputs["user_answer"]
-        else:
-            user_answer = next(iter(ctx.resume_inputs.values()), node_input)
+        val = ctx.resume_inputs.get(interrupt_id)
+        if val is None:
+            val = ctx.resume_inputs.get("user_answer")
+        if val is None:
+            val = next(iter(ctx.resume_inputs.values()), None)
+        if val is None:
+            val = node_input
+        user_answer = val if val is not None else "[No answer received]"
     else:
-        user_answer = node_input
+        user_answer = node_input if node_input is not None else "[No answer received]"
+
     
+
     # If the user types a command while in an interview, cancel the interview
     user_answer_str = str(user_answer).strip()
     if user_answer_str.startswith(("/", "\\")):
         ctx.state["interview_question"] = None
         ctx.state["active_interview_topic"] = None
+        ctx.state["interview_topic_snapshot"] = None
         msg = f"Interview cancelled. Please type your command `{user_answer_str}` again to run it."
         content = types.Content(role="model", parts=[types.Part.from_text(text=msg)])
         yield Event(content=content)
@@ -494,7 +640,10 @@ async def run_interview_cycle(ctx: Context, node_input: str):
         from app.mcp_server import get_progress, update_progress
         progress = get_progress()
         hist_list = progress.get("interview_history", [])
-        hist_list.append(feedback.model_dump())
+        # Include topic in the history entry so each record is self-contained
+        history_entry = feedback.model_dump()
+        history_entry["topic"] = topic
+        hist_list.append(history_entry)
         
         completed = progress.get("completed_skills", [])
         if feedback.score >= 70 and topic.lower() not in [c.lower() for c in completed]:
@@ -507,9 +656,10 @@ async def run_interview_cycle(ctx: Context, node_input: str):
     except Exception:
         pass
         
-    # Reset interview state
+    # Reset interview state (snapshot cleared too)
     ctx.state["interview_question"] = None
     ctx.state["active_interview_topic"] = None
+    ctx.state["interview_topic_snapshot"] = None
     
     evaluation_response = (
         f"### Mock Interview Evaluation\n\n"
@@ -517,7 +667,7 @@ async def run_interview_cycle(ctx: Context, node_input: str):
         f"**Your Answer:** {user_answer}\n\n"
         f"**Score:** {feedback.score}/100\n"
         f"**Feedback:** {feedback.feedback}\n\n"
-        f"Type `/roadmap` to see your updated roadmap, or `/interview [topic]` to try again."
+        f"Type `/roadmap` to see your updated roadmap, or `/interview <topic>` to try again."
     )
     content = types.Content(role="model", parts=[types.Part.from_text(text=evaluation_response)])
     yield Event(content=content)

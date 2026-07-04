@@ -210,3 +210,15 @@ artifacts/
 # Local runtime data
 storage/progress.json
 
+# Scratch / debug scripts (local dev only)
+scratch/
+
+# Video and multimedia project files
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.prproj
+*.prin
+Adobe Premiere Pro Auto-Save/
+

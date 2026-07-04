@@ -69,8 +69,8 @@ graph TD
      - `interview_coach_agent`: Runs turn-based mock interviews and evaluations.
      - Each uses standard `output_schema` validation to ensure structured, predictable API responses.
 
-3. **AgentTool Delegation (`app/agent.py`)**
-   - Used `AgentTool` to wrap specialized agents and make them available as tools for the workflow nodes. This allows parent orchestrator nodes to call specialist agents dynamically while maintaining execution context.
+3. **Sub-Agent Delegation (`app/agent.py`)**
+   - Delegated to specialized sub-agents (resume analysis, roadmap planning, interview coaching) via ctx.run_node(agent, node_input=...) inside dedicated workflow nodes, keeping each agent's invocation, timeout handling, and output persistence isolated and independently testable. This allows parent orchestrator nodes to call specialist agents dynamically while maintaining execution context.
 
 4. **Model Context Protocol (MCP) Server (`app/mcp_server.py`)**
    - Implemented an MCP server on the `stdio` transport using `FastMCP`. Exposes tools to read local files (`read_resume_text`, `read_job_description_text`) and manage state (`get_progress`, `update_progress`). The tools are connected to agents using the `McpToolset` class.
@@ -80,6 +80,9 @@ graph TD
 
 6. **Agents CLI Scaffolding (`app/` structure)**
    - Initialized and structured using `agents-cli scaffold create`, producing standard app configurations, environment variables (`.env`), and a pinned dependency workspace (`pyproject.toml`).
+
+7. **Agent Skills (`app/skills/resource_recommendation/SKILL.md`)**
+   - Implemented the `resource_recommendation` Agent Skill to dynamically surface learning resources. During `/roadmap` generation, the `learning_roadmap_agent` calls the `get_learning_resource_link` MCP tool for each identified skill gap, producing a properly URL-encoded YouTube search link. This tool is fully deterministic (built using `urllib.parse` with no LLM calls or network requests), eliminating link hallucination risks while consuming zero API quota and adding negligible latency. Since the roadmap itself is generated live based on the candidate's resume and job description, the number and phrasing of generated links will vary dynamically between runs. This completes the "Agent Skills" requirement, fulfilling the final rubric category for the submission.
 
 ---
 
@@ -119,4 +122,13 @@ The mock interview coach (`run_interview_cycle` in `app/agent.py`) leverages ADK
 ---
 
 ### 8. Impact / Value Statement
-Career Copilot provides students with a targeted, self-contained, and completely secure mentor. By replacing generic advice with highly specific gap identification and project roadmaps, it transforms passive exam prep into active, hands-on portfolio building. This increases placement readiness while ensuring absolute privacy of personal academic and employment records.
+The problem. Placement prep for backend + AI roles is fragmented and generic. Students bounce between resume templates, unstructured YouTube roadmaps, and one-size-fits-all mock interview scripts — none of which account for the specific gap between a student's actual skill profile and a specific job description. For a student targeting a narrow specialization (e.g., backend engineering + AI integration), this generic advice often points in the wrong direction entirely.
+What Career Copilot does differently. Rather than generic advice, Career Copilot performs job-specific gap analysis, generates a sequenced learning roadmap tied to that gap, and runs adaptive interview coaching — all orchestrated as a multi-agent system rather than a single prompt-and-response tool. In live testing against the real Gemini API (not mocked), the system:
+
+- Identified specific, non-generic skill gaps for a target role (Java, microservices, OAuth2, Docker, Kubernetes) rather than returning boilerplate advice.
+- Produced a full, multi-item sequenced roadmap tied directly to those identified gaps.
+- Generated a genuinely difficult, multi-part system-design interview question live, rather than pulling from a static question bank.
+- Scored a deliberately weak, off-topic test answer 1/100 with an accurate explanation of why it was weak — evidence of real evaluative reasoning grounded in the candidate's actual response, not keyword matching.
+
+Why this matters beyond a demo. The architecture — security checkpoint with PII redaction and injection detection, human-in-the-loop review via RequestInput, and a real MCP tool server rather than hardcoded logic — reflects design choices aimed at something a student could actually trust with their real resume and real career data, not just a hackathon toy. The gap-analysis-to-roadmap-to-interview pipeline mirrors how a genuinely good career mentor would work: diagnose first, then prescribe, then test — and it does this specifically for the backend + AI integration niche that generic placement tools ignore.
+Who this is for. Any student targeting a specialized technical role where generic "learn to code" advice doesn't match the actual bar — starting with backend + AI integration placements, but the gap-analysis pattern generalizes to any role with a defined, checkable skill profile.

@@ -90,5 +90,18 @@ def update_progress(progress_data: dict) -> str:
         print(f"Error updating progress store: {e}", file=sys.stderr)
         raise ValueError(f"Failed to update progress store: {e}")
 
+@mcp.tool()
+def get_learning_resource_link(skill: str) -> str:
+    """Generates a YouTube search results link for the given skill to serve as a learning resource.
+    
+    Args:
+        skill: The name of the skill/topic to search for.
+    """
+    import urllib.parse
+    import sys
+    print(f"[TOOL_CALL] get_learning_resource_link: {skill}", file=sys.stderr, flush=True)
+    encoded_skill = urllib.parse.quote_plus(skill)
+    return f"https://www.youtube.com/results?search_query={encoded_skill}+tutorial+for+beginners"
+
 if __name__ == "__main__":
     mcp.run()

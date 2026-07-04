@@ -1,44 +1,91 @@
-[0:00 — HOOK]
-Preparing for software engineering internships and placements can feel like navigating a maze in the dark. Students rarely get clear answers on where their skills fall short or whether they are actually prepared for technical interviews.
+CAREER COPILOT — DEMO SCRIPT (v2)
+Target runtime: ~4:30 (hard cap 5:00)
+IMPORTANT: Requires a valid GOOGLE_API_KEY before recording — this script assumes
+real LLM-generated output at every step, not hardcoded fallback questions.
 
-[0:20 — WHAT IT IS]
-(pause)
-To solve this, I built Career Copilot. It is an adaptive, secure, local concierge agent that audits a student's resume against target job descriptions, designs a custom project-based learning plan, and coaches them through realistic, turn-based mock interviews.
+---
 
-[0:40 — SHOW THE BANNER]
+[0:00 — HOOK] (~15s)
+Preparing for software engineering internships can feel like navigating a maze
+in the dark. Students rarely get clear answers on where their skills actually
+fall short, or whether they're ready for a technical interview.
+
+[0:15 — WHAT IT IS] (~20s)
 (show assets/cover_page_banner.png)
-As you can see from our cover banner, Career Copilot acts as a secure, local, and adaptive strategist designed specifically to close the gap between college curricula and industry expectations.
+To solve this, I built Career Copilot — a secure, local concierge agent that
+audits a student's resume against a target job description, builds a
+custom project-based learning roadmap, and coaches them through realistic,
+turn-based mock interviews.
 
-[1:00 — ARCHITECTURE]
+[0:35 — HOW IT WAS BUILT] (~15s)
+Career Copilot was designed and iteratively debugged using Google's
+Antigravity IDE — I used it to trace bugs like a stale-session issue in the
+interview flow and a security gap in PII redaction, right down to the line.
+
+[0:50 — ARCHITECTURE] (~50s)
 (show assets/architecture_diagram.png)
-Let's look at the system architecture. (pause)
-Everything is built on the Google Agent Development Kit 2.0 Workflow API. (pause)
-When the student sends a message, it is first evaluated by our security checkpoint node, which scrubs PII like emails and phone numbers, checks for prompt injection keywords, and records structured audit logs. (pause)
-Once cleared, the orchestrator node coordinates the conversation flow, routing requests based on user commands. (pause)
-For skill gap analysis, the orchestrator calls our resume job match agent, which uses local MCP tools to read the candidate's resume and compares it against target requirements. (pause)
-Next, the learning roadmap agent pulls these identified gaps, cross-references completed skills from the local progress store, and structures a prioritized roadmap containing resource recommendations and hands-on projects. (pause)
-Finally, when the student wants to practice, the orchestrator triggers the run interview cycle node. This node coordinates with our interview coach agent to generate technical questions and utilizes a human-in-the-loop pause to wait for the student's response.
+Let's look at the system architecture. Everything runs on the Google Agent
+Development Kit 2.0 Workflow API. (pause)
+When a student sends a message, it first hits our security checkpoint node —
+which scrubs PII like emails and phone numbers, screens for prompt injection,
+and writes a structured audit log. (pause)
+Once cleared, the orchestrator node routes the request based on the command.
+For skill-gap analysis, it calls the resume-and-job-match agent, which uses
+local MCP tools to read the resume and compare it against the target role.
+(pause)
+The learning roadmap agent then takes those gaps, cross-references the
+student's completed skills from local progress storage, and builds a
+prioritized, project-based roadmap. (pause)
+And when the student's ready to practice, the orchestrator hands off to the
+interview coach agent, which generates a real technical question and pauses
+the workflow — human-in-the-loop — until the student responds.
 
-[2:00 — LIVE DEMO]
+[1:40 — LIVE DEMO] (~1:50)
 (switch to playground at localhost:18081)
-Let's see this in action. (pause)
-First, I will run the gap analysis command: `/analyze data/resume.txt data/sample_jd_wso2_backend_intern.txt`.
-(pause)
-The system executes the workflow. The security checkpoint node validates the input, and the resume agent compares our sample resume of Alex Dev against the WSO2 job description. As you can see, the agent has generated a structured gap report. It identifies Python and Git as strong, but flags FastAPI, Docker, and SQL as missing. (pause)
-Now, I will type `/roadmap` in the input field and press send.
-(pause)
-The learning roadmap agent reads the gap report and progress logs. It immediately structures a sequenced roadmap. The plan suggests building a REST API using FastAPI as a high-priority project, since closing the FastAPI gap is foundational. (pause)
-Next, let's start a mock interview on this topic. I will type `/interview FastAPI`.
-(pause)
-The orchestrator routes us to the interview cycle, and the interview coach agent generates a challenging technical question. (pause)
-It asks me to explain the differences between path parameters and query parameters in FastAPI. (pause)
-The workflow pauses here, waiting for my response. I'll type in a sample answer.
-(pause)
-Once submitted, the workflow resumes. The coach agent scores my answer, provides constructive critique, and updates the local storage file.
+Let's see it in action.
 
-[3:00 — SECURITY & MCP]
+First, the gap analysis command:
+`/analyze data/resume.txt data/sample_jd_wso2_backend_intern.txt`
 (pause)
-Under the hood, all file parsing and progress storage are handled through our local Model Context Protocol server. The server exposes stdio tools for read and write operations, meaning no raw student data ever leaves the local machine except for direct LLM analysis calls. Security is maintained by keeping all progress states strictly local and protected by the gateway checkpoint.
+The security checkpoint validates the input, then the resume agent compares
+our sample candidate against the WSO2 job description. Here's the structured
+gap report — it identifies which skills are strong, which are weak, and 
+which are missing entirely, based on real analysis of the resume against 
+the job description. (pause)
 
-[3:30 — IMPACT / CLOSE]
-Career Copilot shifts placement preparation from generic advice to structured, project-driven learning. It helps students build portfolios that count, test their readiness in a secure environment, and enter interviews with confidence. Thank you.
+Now `/roadmap`.
+(pause)
+The roadmap agent reads that gap report plus the progress log, and builds a
+sequenced, prioritized plan — each missing skill gets a concrete project and 
+a learning resource, ordered by priority. (pause)
+
+Let's practice it. `/interview FastAPI`.
+(pause)
+The orchestrator routes to the interview cycle, and the coach agent generates
+a real question — not a template — asking me to explain the difference
+between path and query parameters in FastAPI. (pause)
+The workflow pauses here and waits for my answer. I'll type one in.
+(pause)
+Once I submit, the coach agent scores my answer, gives specific feedback,
+and writes the result back to local progress storage.
+
+[3:30 — SECURITY & MCP] (~30s)
+Under the hood, all file parsing and progress storage run through a local
+Model Context Protocol server, exposing studio tools for read and write
+operations. No raw student data leaves the local machine except for the
+direct LLM analysis calls themselves — progress state stays local, gated by
+the security checkpoint on every request.
+
+[4:00 — IMPACT / CLOSE] (~30s)
+Career Copilot turns placement prep from generic advice into structured,
+project-driven learning. It's built on a real multi-agent architecture —
+genuine LLM reasoning at every step, not hardcoded logic dressed up as AI —
+so students get gap analysis, roadmaps, and interview coaching they can
+actually trust. Thank you.
+
+---
+TIMING NOTE: Read this aloud once with a stopwatch before recording. Scripted
+pauses (for agent responses, typing, screen switches) almost always run
+longer live than on paper — if you're tracking over ~4:45, trim the
+architecture section first, since the live demo is the strongest, most
+differentiating part of the video and shouldn't be cut.

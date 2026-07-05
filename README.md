@@ -147,36 +147,6 @@ To force-stop any background processes on Windows (PowerShell):
 Get-Process -Id (Get-NetTCPConnection -LocalPort 18081, 8090 -ErrorAction SilentlyContinue).OwningProcess | Stop-Process -Force
 ```
 
----
-
-## Push to GitHub
-
-1. Create a new repo at https://github.com/new
-   - Name: `career-copilot`
-   - Visibility: Public or Private
-   - Do NOT initialize with README (you already have one)
-
-2. In your terminal, navigate into your project folder:
-   ```bash
-   cd career-copilot
-   git init
-   git add .
-   git commit -m "Initial commit: career-copilot ADK agent"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/career-copilot.git
-   git push -u origin main
-   ```
-
-3. Verify `.gitignore` includes:
-   - `.env` (your API key - must NEVER be pushed!)
-   - `.venv/`
-   - `__pycache__/`
-   - `*.pyc`
-   - `.adk/`
-   - `artifacts/`
-
----
-
 ## Assets
 
 ### Cover Page Banner
@@ -184,6 +154,21 @@ Get-Process -Id (Get-NetTCPConnection -LocalPort 18081, 8090 -ErrorAction Silent
 
 ### Architecture Diagram
 ![Architecture Diagram](assets/architecture_diagram.png)
+
+---
+
+## Limitations & Future Improvements
+
+**Current limitations:**
+- Prompt injection detection is keyword-based and will not catch paraphrased or semantically disguised injection attempts.
+- The MCP file-reading tools (`read_resume_text`, `read_job_description_text`) do not restrict absolute file paths to a sandboxed directory — acceptable for local single-user use, but not suitable as-is for a multi-tenant deployment.
+- Progress and interview history are stored in a single local JSON file (`storage/progress.json`), which does not support concurrent users or sessions.
+
+**Planned improvements:**
+- Replace keyword-based injection detection with a lightweight classifier for more robust coverage.
+- Add path sandboxing to MCP file tools before any multi-user or cloud deployment.
+- Migrate local JSON progress storage to a proper per-user database (e.g. SQLite or Firestore) for multi-user support.
+- Expand the Agent Skills library beyond resource recommendation (e.g. a resume-formatting skill, a mock-interview-question-bank skill).
 
 ---
 

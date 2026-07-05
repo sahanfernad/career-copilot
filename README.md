@@ -22,6 +22,8 @@ Career Copilot is a secure multi-agent system built using the Google Agent Devel
    # Open .env and add your GOOGLE_API_KEY
    ```
 
+   > **Note:** `.env.example` ships with `MOCK_LLM=False` — this calls the real Gemini API and requires a valid `GOOGLE_API_KEY`. Set `MOCK_LLM=True` only if you want to test the workflow offline without consuming API quota (uses hardcoded fallback responses instead of live LLM calls).
+
 3. Install dependencies:
    ```bash
    make install

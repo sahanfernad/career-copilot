@@ -18,42 +18,7 @@ Career Copilot solves this problem by offering a local, secure, and personalized
 
 ### 2. Solution Architecture
 
-```mermaid
-graph TD
-    START[START] --> SecCheck[Security Checkpoint Node]
-    SecCheck -->|SECURITY_EVENT| SecError[Security Error Node]
-    SecCheck -->|PASS| Orch[Orch/Coordinator Node]
-    
-    Orch -->|/analyze| PrepResume[Prepare Resume Input]
-    PrepResume --> ResumeAgent[Resume & Job Match Agent]
-    ResumeAgent --> SaveResume[Save Resume Result]
-    SaveResume --> Orch
-    
-    Orch -->|/roadmap| PrepRoadmap[Prepare Roadmap Input]
-    PrepRoadmap --> RoadmapAgent[Learning Roadmap Agent]
-    RoadmapAgent --> SaveRoadmap[Save Roadmap Result]
-    SaveRoadmap --> Orch
-    
-    Orch -->|/interview| InterviewCycle[Run Interview Cycle Node]
-    InterviewCycle -->|RequestInput| Human[Human User]
-    Human -->|Resume Session| InterviewCycle
-    InterviewCycle --> Orch
-    
-    Orch -->|/exit| FinalExit[Handle Exit]
-    Orch -->|default| FinalDefault[Handle Default]
-    
-    FinalExit --> Final[Final Output]
-    FinalDefault --> Final
-    SecError --> Final
-
-    subgraph MCP Server
-        Tools[read_resume_text<br>read_job_description_text<br>get_progress<br>update_progress<br>get_learning_resource_link]
-    end
-    
-    ResumeAgent -.->|Calls MCP| Tools
-    RoadmapAgent -.->|Calls MCP| Tools
-    InterviewCycle -.->|Calls MCP| Tools
-```
+![Architecture Diagram](assets/architecture_diagram.png)
 
 ---
 

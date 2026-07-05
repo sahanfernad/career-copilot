@@ -88,6 +88,20 @@ graph TD
 
 ---
 
+## Security
+
+Career Copilot runs a security checkpoint (`security_checkpoint` in `app/agent.py`) as the mandatory first node in the workflow, before any user input reaches an LLM agent:
+
+- **PII Scrubbing**: Regex-based detection redacts emails and phone numbers from all user input and uploaded file content (resume/JD text) before it's passed to any agent, replacing them with `[REDACTED_EMAIL]` / `[REDACTED_PHONE]`.
+- **Prompt Injection Detection**: Scans input for known injection patterns (e.g. "ignore previous instructions", "jailbreak", "override instructions") and blocks execution with a `SECURITY_EVENT` route if detected, rather than passing the input through.
+- **Domain Relevancy Check**: Flags input longer than 100 characters that contains no software-engineering-related terms, as a lightweight guard against off-topic or abusive use of the pipeline.
+- **Local-Only Data**: All file parsing and progress tracking happen on the student's local machine (`storage/progress.json`); no resume or interview data is sent to any external store beyond the direct Gemini API calls needed for analysis.
+- **Audit Logging**: Every security check emits a structured JSON log entry (`pii_detected`, `injection_detected`, `domain_relevant`, `severity`) for traceability.
+
+Unit tests for the PII scrubbing logic are in `tests/unit/test_pii_scrubbing.py`.
+
+---
+
 ## How to Run
 
 - **Playground (Interactive UI Mode)**:

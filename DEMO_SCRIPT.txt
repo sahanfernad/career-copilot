@@ -1,7 +1,5 @@
 CAREER COPILOT — DEMO SCRIPT (v2)
 Target runtime: ~4:30 (hard cap 5:00)
-IMPORTANT: Requires a valid GOOGLE_API_KEY before recording — this script assumes
-real LLM-generated output at every step, not hardcoded fallback questions.
 
 ---
 
@@ -82,10 +80,3 @@ project-driven learning. It's built on a real multi-agent architecture —
 genuine LLM reasoning at every step, not hardcoded logic dressed up as AI —
 so students get gap analysis, roadmaps, and interview coaching they can
 actually trust. Thank you.
-
----
-TIMING NOTE: Read this aloud once with a stopwatch before recording. Scripted
-pauses (for agent responses, typing, screen switches) almost always run
-longer live than on paper — if you're tracking over ~4:45, trim the
-architecture section first, since the live demo is the strongest, most
-differentiating part of the video and shouldn't be cut.

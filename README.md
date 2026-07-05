@@ -155,6 +155,10 @@ Get-Process -Id (Get-NetTCPConnection -LocalPort 18081, 8090 -ErrorAction Silent
 ### Architecture Diagram
 ![Architecture Diagram](assets/architecture_diagram.png)
 
+### Playground Demo
+![Playground Demo](assets/playground_demo.png)
+*Skill Gap Report output from the `/analyze` command, showing the live agent workflow graph alongside the structured response.*
+
 ---
 
 ## Limitations & Future Improvements

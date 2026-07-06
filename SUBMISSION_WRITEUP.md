@@ -3,6 +3,7 @@
 
 **Track:** Concierge Agents
 **Builder:** Solo (Solo Developer)
+**Demo Video:** [Watch on YouTube](https://youtu.be/d0eyS9mBqSM) (extended uncut demo also available [here](https://youtu.be/d0UBUYvQDXU))
 
 ---
 
@@ -48,6 +49,9 @@ Career Copilot solves this problem by offering a local, secure, and personalized
 
 7. **Agent Skills (`app/skills/resource_recommendation/SKILL.md`)**
    - Implemented the `resource_recommendation` Agent Skill to dynamically surface learning resources. During `/roadmap` generation, the `learning_roadmap_agent` calls the `get_learning_resource_link` MCP tool for each identified skill gap, producing a properly URL-encoded YouTube search link. This tool is fully deterministic (built using `urllib.parse` with no LLM calls or network requests), eliminating link hallucination risks while consuming zero API quota and adding negligible latency. Since the roadmap itself is generated live based on the candidate's resume and job description, the number and phrasing of generated links will vary dynamically between runs. This completes the "Agent Skills" requirement, fulfilling the final rubric category for the submission.
+
+8. **Deployability (`deployment/terraform/`)**
+   - Full Terraform IaC provisioning Google Cloud Run (`service.tf`), IAM (`iam.tf`), storage (`storage.tf`), telemetry (`telemetry.tf`), and enabled APIs (`apis.tf`), with environment-specific variables in `vars/env.tfvars` — demonstrating the project is deployable beyond a local demo.
 
 ---
 

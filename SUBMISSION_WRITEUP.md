@@ -1,4 +1,4 @@
-# Kaggle AI Agents Intensive: Capstone Submission Write-Up
+# AI Agents: Intensive Vibe Coding Capstone Project
 ## Career Copilot: AI Placement Preparation Agent
 
 **Track:** Concierge Agents

@@ -3,7 +3,7 @@
 Career Copilot is a secure multi-agent system built using the Google Agent Development Kit (ADK) that reads a student's resume, identifies skill gaps against a target job description, generates a personalized learning roadmap with concrete projects, and coaches them through mock interviews to track readiness.
 
 ## 🎥 Demo Video
-- **Main demo (~4:30):** https://youtu.be/d0eyS9mBqSM
+- **Main demo (3:12):** https://youtu.be/d0eyS9mBqSM
 - **Extended uncut demo:** https://youtu.be/d0UBUYvQDXU
 
 ## Prerequisites
